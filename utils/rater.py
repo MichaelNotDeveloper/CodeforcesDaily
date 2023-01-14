@@ -2,10 +2,18 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
 
 class Ranker:
     def __init__(self):
-        self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
+        
+        options = webdriver.ChromeOptions()
+        
+        options.add_argument("user-agent=Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:84.0) Gecko/20100101 Firefox/84.0")
+        options.add_argument("--disable-blink-features=AutomationControlled")
+        options.headless = True
+        
+        self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options = options)
         self.driver.get("https://cfviz.netlify.app/virtual-rating-change.html")
 
         self.contestId = self.driver.find_element('id', 'contestId')
@@ -27,7 +35,11 @@ class Ranker:
         self.clear_box('rating')
         self.rating.send_keys(curr_rating)
         
-        self.driver.find_element('id', 'submitButton').click()
+        #self.driver.find_element('id', 'submitButton').click()
+        
+        button = self.driver.find_element(By.CSS_SELECTOR, 'button[id = "submitButton"]')
+        self.driver.execute_script("arguments[0].click();", button)
+        
         
         while (self.driver.find_element('id', 'rank').get_attribute('innerHTML') == '...'):
             pass
@@ -39,4 +51,3 @@ class Ranker:
         self.driver.execute_script (r"document.getElementById('rank').innerHTML = '...'")
         
         return [int(change), int(expected_rank), int(position)]
-

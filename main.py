@@ -296,7 +296,7 @@ def cntst(message):
 #
 @bot.message_handler(commands=['end'])
 def end_contest(message):
-        global df
+        global df, today_contest
         
         if message != None:
             if (not (message.chat.id in admins)):
@@ -332,10 +332,10 @@ def end_contest(message):
         today_contest = getnum(contest_data_name)
         
         for row in df[["tgid"]].iterrows():
-            bot.send_message(str(row[1]['tgid']), f"Контест на сегодня : {'https://codeforces.com/contest/'+str(today_contest)}")
+            bot.send_message(str(row[1]['tgid']), f"💌 Today's contest : {'https://codeforces.com/contest/'+str(today_contest)}")
             
         for row in df.iterrows():
-            f.loc[df['tgid'] == row[1]['tgid'], "Change"] = 0
+            df.loc[df['tgid'] == row[1]['tgid'], "Change"] = 0
 #
 
 
@@ -348,14 +348,24 @@ def add_contest(message):
         if (not (message.chat.id in admins)):
             print("Hacking attempt")
             return
-    
-        if (not (message.chat.id in admins)):
-            print("Hacking attempt")
-            return
+
             
         writenum(contest_data_name, message.text.split()[1])
 #
 
+
+#
+@bot.message_handler(commands=['public'])
+def add_contest(message):
+        global today_contest
+        
+        if (not (message.chat.id in admins)):
+            print("Hacking attempt")
+            return
+        
+        for row in df[["tgid"]].iterrows():
+            bot.send_message(str(row[1]['tgid']), '🍀' + message.text[7:])
+#
 
 
 #
@@ -392,4 +402,5 @@ def change_rate(message):
 
 
 if __name__ == "__main__":
+    bot.infinity_polling(timeout=10, long_polling_timeout = 5)
     bot.polling(none_stop=True)
