@@ -306,27 +306,31 @@ def end_contest(message):
         for row in df.iterrows():
             user = row[1]['cfid']
             print(user)
-            data = get(f'https://codeforces.com/api/contest.standings?contestId={today_contest}&showUnofficial=true&handles={user}').json()['result']['rows']
-            if (not len(data)) or int(df.loc[df['tgid'] == row[1]['tgid'], "Change"]) :
+            try:
+                data = get(f'https://codeforces.com/api/contest.standings?contestId={today_contest}&showUnofficial=true&handles={user}').json()['result']['rows']
+                if (not len(data)) or int(df.loc[df['tgid'] == row[1]['tgid'], "Change"]) :
+                    bot.send_message(str(row[1]['tgid']), f"Contest is ending and we are calculating results! 🍾\nRating is about to be changed!!! 🎁")
+                else :
+                    print(row[1]['cfid'])
+                    rank = row[1]['score']
+                    points = data[0]['points']
+                    penalty = data[0]['penalty']
+                    
+                    cfdata = rank_model.getrank(today_contest, points, rank, penalty)
+                    
+                    df.loc[df['tgid'] == row[1]['tgid'], "score"] = int(df.loc[df['tgid'] == row[1]['tgid'], "score"])+int(cfdata[0])
+                    df.loc[df['tgid'] == row[1]['tgid'], "hist"] = df.loc[df['tgid'] == row[1]['tgid'], "hist"].apply(lambda x:x + str(int(df.loc[df['tgid'] == row[1]['tgid'], "score"])) + ';')
+                    df.loc[df['tgid'] == row[1]['tgid'], "points"] = df.loc[df['tgid'] == row[1]['tgid'], "points"].apply(lambda x:x + str(cfdata[0]) + ';')
+                    df.loc[df['tgid'] == row[1]['tgid'], "Change"] = 1
+                    
+                    
+                    bot.send_message(str(row[1]['tgid']), f"Contest is ending and we are calculating results! 🍾\nRating is about to be changed!!! 🎁")
+                    bot.send_message(str(row[1]['tgid']), f"✅ Rating change is : {cfdata[0]}\n✅ Virtual poistion is : {cfdata[2]}\n✅ Expected rank is : {cfdata[1]}")
+                    
+                    update()
+            except:
                 bot.send_message(str(row[1]['tgid']), f"Contest is ending and we are calculating results! 🍾\nRating is about to be changed!!! 🎁")
-            else :
-                print(row[1]['cfid'])
-                rank = row[1]['score']
-                points = data[0]['points']
-                penalty = data[0]['penalty']
-                
-                cfdata = rank_model.getrank(today_contest, points, rank, penalty)
-                
-                df.loc[df['tgid'] == row[1]['tgid'], "score"] = int(df.loc[df['tgid'] == row[1]['tgid'], "score"])+int(cfdata[0])
-                df.loc[df['tgid'] == row[1]['tgid'], "hist"] = df.loc[df['tgid'] == row[1]['tgid'], "hist"].apply(lambda x:x + str(int(df.loc[df['tgid'] == row[1]['tgid'], "score"])) + ';')
-                df.loc[df['tgid'] == row[1]['tgid'], "points"] = df.loc[df['tgid'] == row[1]['tgid'], "points"].apply(lambda x:x + str(cfdata[0]) + ';')
-                df.loc[df['tgid'] == row[1]['tgid'], "Change"] = 1
-                
-                
-                bot.send_message(str(row[1]['tgid']), f"Contest is ending and we are calculating results! 🍾\nRating is about to be changed!!! 🎁")
-                bot.send_message(str(row[1]['tgid']), f"✅ Rating change is : {cfdata[0]}\n✅ Virtual poistion is : {cfdata[2]}\n✅ Expected rank is : {cfdata[1]}")
-                
-                update()
+
         
         delnum(contest_data_name)
         today_contest = getnum(contest_data_name)
